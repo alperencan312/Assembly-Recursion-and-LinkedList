@@ -1,0 +1,386 @@
+#########################################################################
+
+			  RECURSIVE SUMMATION (PRE)
+
+#########################################################################
+
+.text
+
+la $a0, inputStr
+li $v0, 4
+syscall
+
+la $a0, input
+li $v0, 4
+syscall
+
+jal recursiveSummation
+
+
+add $t0, $v0, $zero		# v0 is stored in t0
+
+la $a0, result			
+li $v0, 4
+syscall
+
+add $a0, $t0, $zero
+li $v0, 1
+syscall
+
+li $v0, 10
+syscall
+
+recursiveSummation:
+	addi $sp, $sp, -8	# allocate space from stack
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	lb $t0, 0($a0)
+	bne $t0, 0, else 
+	add $v0, $zero, $zero # return 0
+	addi $sp, $sp, 8
+	jr $ra
+	else:			# if $t0 != 0
+	addi $a0, $a0, 1
+	jal recursiveSummation
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	addi $sp, $sp, 8
+	lb $t0, 0($a0)
+	addi $t0, $t0, -48 # to convert to integer
+	add $v0, $v0, $t0
+	jr $ra
+
+.data
+
+input:	.asciiz "7134"
+result: .asciiz "\tResult: "
+inputStr: .asciiz "Input: "
+
+
+#########################################################################
+
+			     DELETE AFTER X (PRE)
+
+#########################################################################
+
+deleteAfter_x:
+	addi $sp, $sp, -12    # allocate space from stack stack
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	sw $s2, 8($sp)
+		
+	loop_deleteAfter_x:
+		beqz $s0, deleteAfter_x_end
+		lw $s1, 0($s0)
+		beqz $s1, deleteAfter_x_end
+		lw $s2, 4($s0)
+		beq $s2, $a1, deleteAfter_x_exe
+		move $s0, $s1
+		j loop_deleteAfter_x
+		
+	deleteAfter_x_exe:
+		lw $s1, 0($s1)
+		sw $s1, 0($s0)
+		move $s0, $s1
+		j loop_deleteAfter_x
+	
+	deleteAfter_x_end:
+		lw $s2, 8($sp)
+		lw $s1, 4($sp)
+		lw $s0, 0($sp)
+		addi $sp, $sp, 12
+		
+		li $v0, 0
+		move $v1, $s0
+		jr $ra	
+
+### NOTE : SINCE THE DELETED NODE IS NO LONGER POINTED, IT CANNOT REACHABLE THEREFORE IT CANNOT RETURN BACK TO THE HEAP. ###
+
+
+#########################################################################
+
+			      CHECKPATTERN
+
+#########################################################################
+
+.text
+	li $a0, 5 # 101
+	li $a1, 760666797 # 00 101 101 010 101 101 101 101 010 101 101
+	li $a2, 3
+	
+	jal checkPattern
+	
+	move $t0, $v0
+	
+	la $a0, resultStr
+	li $v0, 4
+	syscall
+	
+	move $a0, $t0
+	li $v0, 1
+	syscall
+	
+	li $v0, 10
+	syscall
+	
+checkPattern:
+
+	li $s0, 32
+	div $s0, $a2
+	mflo $s0
+	
+	loop:
+	beq $s0, $zero, end_loop
+	xor $t1, $a0, $a1
+	and $t1, $t1, $a0
+	bne $t1, $zero, continue
+	addi $v0, $v0, 1
+	
+	continue:
+	move $t2, $a2
+	
+	addi $s0, $s0, -1
+	
+	loop2:
+		beq $t2, $zero, end_loop2
+		sll $a0, $a0, 1
+		addi $t2, $t2, -1
+		j loop2
+		
+	end_loop2:
+		j loop
+		
+	end_loop:
+		jr $ra
+
+.data
+
+	resultStr:	.asciiz "Result: "
+
+#########################################################################
+
+			      REVERSE STRING
+
+#########################################################################
+
+.text
+
+	la $a0, string1
+	la $a1, string2
+	jal reverseString
+	
+	la $a0, string2
+	li $v0, 4
+	syscall
+	
+	li $v0, 10
+	syscall
+
+	reverseString:
+		addi $sp, $sp, -8
+		sw $ra, 0($sp)
+		sw $a0, 4($sp)
+		
+		lb $t0, 0($a0)
+		beqz $t0, else
+		
+		addi $a0, $a0, 1
+		
+		jal reverseString
+		
+		lw $ra, 0($sp)
+		lw $a0, 4($sp)
+		addi $sp, $sp, 8
+		
+		addi $a1, $a1, 1
+		lb $t0, 0($a0)
+		sb $t0, -1($a1)
+
+		jr $ra
+		
+	else:
+		addi $sp, $sp, 8
+		jr $ra
+		
+.data
+
+	string1: .asciiz "abcdef"
+	string2: .asciiz "qwerty"
+
+
+#########################################################################
+
+			      INSERT N
+
+#########################################################################
+
+Insert_n:
+	li $v0, -1 
+	
+	addi $sp, $sp, -8
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	
+	bne $a2, 1, insert_n_notFirst
+	
+	li $a0, 8
+	li $v0, 9
+	syscall
+	
+	sw $s0, 0($v0)
+	sw $a1, 4($v0)
+	move $v1, $v0
+	
+	lw $s1, 4($sp)
+	lw $s0, 0($sp)
+	addi $sp, $sp, 8
+		
+	li $v0, 0
+	jr $ra
+	
+	insert_n_notFirst:
+	
+	#add $s0, $a0, $zero
+	
+	addi $t0, $a2, -1
+	
+	loop_insert_n:
+		lw $s1, 0($s0)
+		beqz $s1, loop_insert_n_exe2
+		beq $t0, 1, loop_insert_n_exe
+		
+		move $s0, $s1
+		
+		addi $t0, $t0, -1
+		
+		j loop_insert_n
+		
+	loop_insert_n_exe:
+		li $a0, 8
+		li $v0, 9
+		syscall
+		
+		sw $v0, 0($s0)
+		
+		sw $s1, 0($v0)
+		sw $a1, 4($v0)
+		
+		
+		lw $s1, 4($sp)
+		lw $s0, 0($sp)
+		addi $sp, $sp, 8
+		
+		move $v1, $s0
+		
+		move $v0, $zero
+		jr $ra
+
+	loop_insert_n_exe2:
+	
+		li $a0, 8
+		li $v0, 9
+		syscall
+		
+		sw $v0, 0($s0)
+		sw $a1, 4($v0)
+		
+		lw $s1, 4($sp)
+		lw $s0, 0($sp)
+		addi $sp, $sp, 8
+		
+		move $v1, $s0
+		li $v0, 0
+		jr $ra
+
+
+#########################################################################
+
+			      DUPLICATE LIST ITERATIVE
+
+#########################################################################
+
+duplicateListIterative:
+	addi $sp, $sp, -12
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	sw $ra, 8($sp)
+
+	li $a0, 8
+	li $v0, 9
+	syscall
+	
+	move $t0, $v0
+	sw $zero, 0($t0)
+		
+	loop_duplicateListIterative:
+		beqz $s0, duplicateListIterative_end
+		lw $s1, 0($s0)
+		
+		lw $a1, 4($s0)
+		
+		move $a0, $t0
+		jal Insert_end
+		
+		move $s0, $s1
+		j loop_duplicateListIterative
+		
+	duplicateListIterative_end:
+		
+		lw $t0, 0($t0) #to remove the dummy head
+		move $v0, $t0
+		
+		lw $ra, 8($sp)
+		lw $s1, 4($sp)
+		lw $s0, 0($sp)
+		addi $sp, $sp, 12
+		jr $ra
+
+
+#########################################################################
+
+			      DUPLICATE LIST RECURSIVE
+
+#########################################################################
+
+duplicateListRecursive:
+	
+	addi $sp, $sp, -12
+	sw $ra, 0($sp)
+	sw $a0, 4($sp)
+	sw $s0, 8($sp)
+	
+	move $t0, $a0
+	
+	li $a0, 8
+	li $v0, 9
+	syscall
+	
+	move $s0, $v0
+	
+	move $a0, $t0
+	
+	# copying the item
+	lw $t0, 4($a0)
+	sw $t0, 4($s0)
+	
+	lw $t0, 0($a0)
+	beqz $t0, else
+	lw $a0, 0($a0)
+	jal duplicateListRecursive
+	sw $v0, 0($s0)
+	
+	#move $v0,$s0 ###
+	
+	lw $ra, 0($sp)
+	lw $a0, 4($sp)
+	lw $s0, 8($sp)
+	addi $sp, $sp, 12
+	
+	move $v0, $s0
+	jr $ra
+	
+	else:
+		move $v0, $s0
+		addi $sp, $sp, 12
+		jr $ra
+		
